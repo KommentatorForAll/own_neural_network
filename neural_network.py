@@ -1,4 +1,7 @@
+from typing import List
+
 import numpy as np
+import pandas as pd
 import scipy.special
 
 
@@ -23,7 +26,17 @@ class NeuralNetwork:
         self.lr = learn_rate
         self.activation_function = activation_function
 
-    def train(self, train_input, target_output):
+    def train(self, inputs: pd.DataFrame, targets: pd.DataFrame):
+        trans_inputs = inputs.T
+        trans_targets = targets.T
+        print(len(inputs))
+        print(len(trans_inputs))
+        for i in range(len(inputs)):
+            self._train(inputs.loc[i], targets[i])
+            if i % 5000 == 0:
+                print(f'finished {i} data points')
+
+    def _train(self, train_input, target_output):
         inputs = np.array(train_input, ndmin=2).T
         targets = np.array(target_output, ndmin=2).T
 
@@ -44,7 +57,13 @@ class NeuralNetwork:
         self.who += self.lr * np.dot((output_error * final_output * (1.0 - final_output)), np.transpose(hidden_output))
         self.wih += self.lr * np.dot((hidden_errors * hidden_output * (1.0 - hidden_output)), np.transpose(inputs))
 
-    def query(self, input_list):
+    def query(self, inputs: pd.DataFrame) -> List[np.ndarray]:
+        results = []
+        for i in range(len(inputs)):
+            results.append(self._query(inputs.loc[i]))
+        return results
+
+    def _query(self, input_list):
         inputs = np.array(input_list, ndmin=2).T
         hidden_inputs = np.dot(self.wih, inputs)
         hidden_outputs = self.activation_function(hidden_inputs)
