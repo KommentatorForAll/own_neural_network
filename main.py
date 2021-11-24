@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from neural_network import NeuralNetwork
+from neural_network import NeuralNetwork, Layer, NeuralNetworkV2
 
 
 def transform_data(data: pd.DataFrame,
@@ -25,6 +25,22 @@ def transform_data(data: pd.DataFrame,
     return data, targets
 
 
+def load_test():
+    nn = NeuralNetworkV2(path_or_buf='mnist_ai.ai', compress=False)
+    test_data = pd.read_csv('./mnist_test.csv', names=list(range(785)))
+    test_targets = test_data.pop(0)
+    test_data, _ = transform_data(test_data)
+
+    results = nn.query(test_data)
+    results = [np.argmax(res) for res in results]
+    matches: pd.DataFrame = test_targets == results
+    print(matches.value_counts())
+    print(results)
+    accuracy = matches.sum()/len(matches)
+    print(f'accuracy: {accuracy}\nerror: {1-accuracy}')
+    nn.save('mnist_ai.ai.gz', compress=True)
+
+
 def main():
     # names, because else it would take the first as the header row
     train_data = pd.read_csv('./mnist_train.csv', names=list(range(785)))
@@ -37,11 +53,19 @@ def main():
     # 10 output nodes bc there are 10 digits
     output_nodes = 10
     # 0.1 as a learn rate
-    learn_rate = 0.1
+    learn_rate = 0.2
     # amount of epochs we are training
-    epochs = 3
+    epochs = 1
 
-    nn = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learn_rate)
+    layers = [
+        Layer(input_nodes),
+        Layer(hidden_nodes),
+        Layer(100),
+        Layer(output_nodes),
+    ]
+
+    # nn = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learn_rate)
+    nn = NeuralNetworkV2(layers, learn_rate)
 
     train_data, targets = transform_data(train_data, output_nodes)
 
@@ -58,6 +82,8 @@ def main():
     print(results)
     accuracy = matches.sum()/len(matches)
     print(f'accuracy: {accuracy}\nerror: {1-accuracy}')
+
+    nn.save('mnist_ai.ai')
     # for i in range(len(results)):
     #    img_array = test_data.loc[i].to_numpy().reshape((28, 28))
     #    plt.imshow(img_array, cmap='Greys', interpolation='None')
@@ -66,4 +92,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    load_test()
