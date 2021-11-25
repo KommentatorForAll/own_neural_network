@@ -21,7 +21,8 @@ class Layer:
         :param nodes: The amount of nodes this layer has
         :param activation_function: The activation function, which gets applied after calculating the new values.
         Defaults to sigmoid.
-        It would be preferable if only set to functions from scipy.special module, else saving/loading of the model might raise issues
+        It would be preferable if only set to functions from scipy.special module,
+        else saving/loading of the model might raise issues
         :param weights: Only needed when loading an existing model.
         """
         self.nodes: int = nodes
@@ -48,7 +49,7 @@ class Layer:
         :param prev_output: The output of the previous layer
         :param output: The output of this layer
         :param error: The error values for each neuron
-        :param learn_rate: The learnrate of the layer
+        :param learn_rate: The learn rate of the layer
         :return: None
         """
         self.weights += learn_rate * np.dot((error * output * (1.0 - output)), np.transpose(prev_output))
@@ -71,7 +72,7 @@ class NeuralNetworkV2:
         Either layers xor path_or_buf must be given, else an error is thrown.
         You have to either create a new model, or load an existing one. Doing both or nothing is not possible.
         :param layers: A list of layers the neural network has. Must be instances of the Layer class
-        :param learn_rate: Learnrate of the model. should be in range [0;1] to work
+        :param learn_rate: Learn rate of the model. should be in range [0;1] to work
         :param path_or_buf: The path or buffer of an existing model, which gets loaded instead.
         :param compress: If the existing model is stored in a compressed format (.gz)
         """
@@ -200,9 +201,23 @@ class NeuralNetworkV2:
         """
         inputs = [np.array(input_list, ndmin=2).T]
         for layer in self.layers[1:]:
-            # Caluclates the layer output using the last element aka the output of the previous layer as its input
+            # Calculates the layer output using the last element aka the output of the previous layer as its input
             inputs.append(layer._calculate(inputs[-1]))
         return inputs
+
+    def score(self, train_input, target_output, result_mod_function=None):
+        """
+        Returns the accuracy of the model for the given data
+        :param train_input: The test input data
+        :param target_output: the expected result for the input data
+        :param result_mod_function: A function to transform the data before matching it with the expected results. e.g. np.argmax
+        :return: the score of teh model
+        """
+        results = self.query(train_input)
+        if result_mod_function is not None:
+            results = [result_mod_function(res) for res in results]
+        matches = results == target_output
+        return matches.sum() / len(matches)
 
     def save(self, file_name, compress=True) -> None:
         """
@@ -218,7 +233,7 @@ class NeuralNetworkV2:
         weights = ''
         # Iterates through all layers saving their weights and information
         for layer in self.layers[1:]:
-            # Uses numpys save function to save the weights.
+            # Uses numpy s save function to save the weights.
             # This is needed bc numpy cannot convert strings to arrays and vice versa
             np.savetxt(tmp_file, layer.weights)
             # Reads out the saved array
@@ -262,10 +277,6 @@ class NeuralNetwork:
         self.activation_function = activation_function
 
     def train(self, inputs: pd.DataFrame, targets: pd.DataFrame):
-        trans_inputs = inputs.T
-        trans_targets = targets.T
-        print(len(inputs))
-        print(len(trans_inputs))
         for i in range(len(inputs)):
             self._train(inputs.loc[i], targets[i])
             if i % 5000 == 0:

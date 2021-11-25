@@ -36,9 +36,23 @@ def load_test():
     matches: pd.DataFrame = test_targets == results
     print(matches.value_counts())
     print(results)
-    accuracy = matches.sum()/len(matches)
-    print(f'accuracy: {accuracy}\nerror: {1-accuracy}')
+    accuracy = matches.sum() / len(matches)
+    print(f'accuracy: {accuracy}\nerror: {1 - accuracy}')
     nn.save('mnist_ai.ai.gz', compress=True)
+
+    not_matches = test_targets != results
+    x = 0
+    i = 0
+    while x < 3:
+        try:
+            img_array = test_data.loc[not_matches].loc[i].to_numpy().reshape((28, 28))
+            plt.imshow(img_array, cmap='Greys', interpolation='None')
+            plt.show()
+            print(f'target: {test_targets[i]}; pred: {results[i]}')
+            x += 1
+        except KeyError:
+            pass
+        i += 1
 
 
 def main():
@@ -53,9 +67,9 @@ def main():
     # 10 output nodes bc there are 10 digits
     output_nodes = 10
     # 0.1 as a learn rate
-    learn_rate = 0.2
+    learn_rate = 0.1
     # amount of epochs we are training
-    epochs = 1
+    epochs = 4
 
     layers = [
         Layer(input_nodes),
@@ -72,25 +86,14 @@ def main():
     for epoch in range(epochs):
         nn.train(train_data, targets)
 
-    test_targets = test_data.pop(0)
-    test_data, _ = transform_data(test_data)
+    test_data, test_targets = transform_data(test_data, 10)
 
-    results = nn.query(test_data)
-    results = [np.argmax(res) for res in results]
-    matches: pd.DataFrame = test_targets == results
-    print(matches.value_counts())
-    print(results)
-    accuracy = matches.sum()/len(matches)
-    print(f'accuracy: {accuracy}\nerror: {1-accuracy}')
+    accuracy = nn.score(test_data, test_targets)
+    print(f'accuracy: {accuracy}\nerror: {1 - accuracy}')
 
-    nn.save('mnist_ai.ai')
-    # for i in range(len(results)):
-    #    img_array = test_data.loc[i].to_numpy().reshape((28, 28))
-    #    plt.imshow(img_array, cmap='Greys', interpolation='None')
-    #    plt.show()
-    #    print(f'result: {results[i]}; actual: {test_targets[i]}')
+    nn.save('mnist_ai_2.ai.gz')
 
 
 if __name__ == '__main__':
-    # main()
-    load_test()
+    main()
+    # load_test()
