@@ -1,10 +1,10 @@
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-from neural_network import NeuralNetwork, Layer, NeuralNetworkV2
+from neural_network import Layer, NeuralNetworkV2
 
 
 def transform_data(data: pd.DataFrame,
@@ -69,27 +69,39 @@ def main():
     # 0.1 as a learn rate
     learn_rate = 0.1
     # amount of epochs we are training
-    epochs = 4
+    epochs = 5
 
     layers = [
         Layer(input_nodes),
         Layer(hidden_nodes),
         Layer(100),
+        Layer(50),
         Layer(output_nodes),
     ]
 
     # nn = NeuralNetwork(input_nodes, hidden_nodes, output_nodes, learn_rate)
     nn = NeuralNetworkV2(layers, learn_rate)
-
+    target_nums = train_data[0]
     train_data, targets = transform_data(train_data, output_nodes)
 
+    test_targets = test_data.pop(0)
+    test_data, _ = transform_data(test_data)
+
+    df = pd.DataFrame(columns=['epochs', 'train_score', 'val_score'])
+
+    best_score = 0.0
     for epoch in range(epochs):
         nn.train(train_data, targets)
+        accuracy = nn.score(test_data, test_targets, np.argmax)
+        print(f'last_best: {best_score}; current: {accuracy}')
+        if accuracy > best_score:
+            best_score = accuracy
+            nn.save('ai.ai')
+        df.append({'epochs': epoch, 'train_score': nn.score(train_data, target_nums, np.argmax), 'val_score': accuracy}, ignore_index=True)
+    plt.plot(x=df['epochs'], y=df[['train_score', 'val_score']])
+    plt.show()
 
-    test_data, test_targets = transform_data(test_data, 10)
-
-    accuracy = nn.score(test_data, test_targets)
-    print(f'accuracy: {accuracy}\nerror: {1 - accuracy}')
+    print(f'accuracy: {best_score}\nerror: {1 - best_score}')
 
     nn.save('mnist_ai_2.ai.gz')
 

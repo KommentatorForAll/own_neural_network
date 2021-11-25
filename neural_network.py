@@ -210,13 +210,17 @@ class NeuralNetworkV2:
         Returns the accuracy of the model for the given data
         :param train_input: The test input data
         :param target_output: the expected result for the input data
-        :param result_mod_function: A function to transform the data before matching it with the expected results. e.g. np.argmax
+        :param result_mod_function: A function to transform the data before matching it with the expected results.
+        e.g. np.argmax
         :return: the score of teh model
         """
         results = self.query(train_input)
         if result_mod_function is not None:
             results = [result_mod_function(res) for res in results]
+        print(f'type: {type(results)}; res: {results}')
+        print(f'type: {type(target_output)}; res: {target_output}')
         matches = results == target_output
+        print(f'type: {type(matches)}; res: {matches}')
         return matches.sum() / len(matches)
 
     def save(self, file_name, compress=True) -> None:
